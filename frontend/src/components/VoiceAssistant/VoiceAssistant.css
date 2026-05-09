@@ -1,0 +1,99 @@
+/* ═══════════════════════════════════════
+   Voice Assistant Styles
+   ═══════════════════════════════════════ */
+
+.voice-assistant-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
+  z-index: 1000; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; color: #fff;
+}
+
+.close-btn {
+  position: absolute; top: 24px; right: 24px;
+  background: transparent; border: none; color: #fff;
+  cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.2s;
+}
+.close-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+.character-container {
+  position: relative; width: 250px; height: 250px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 40px;
+}
+
+/* Simple Anime-style Blob/Character */
+.anime-character {
+  width: 180px; height: 180px; background: #fff;
+  border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%;
+  position: relative; box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+  animation: float 4s ease-in-out infinite, morph 8s ease-in-out infinite;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 10px;
+}
+
+.anime-character .eyes {
+  display: flex; gap: 40px;
+}
+.anime-character .eye {
+  width: 16px; height: 24px; background: #000; border-radius: 50%;
+  animation: blink 4s infinite; position: relative;
+}
+.anime-character .eye::after {
+  content: ''; position: absolute; top: 4px; right: 4px;
+  width: 6px; height: 6px; background: #fff; border-radius: 50%;
+}
+
+.anime-character .mouth {
+  width: 24px; height: 12px; border-bottom: 4px solid #000;
+  border-radius: 0 0 20px 20px; transition: all 0.2s;
+}
+
+.anime-character.speaking .mouth {
+  height: 24px; background: #ff9999; border: 4px solid #000; border-radius: 10px 10px 20px 20px;
+  animation: talk 0.3s infinite alternate;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes morph {
+  0%, 100% { border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%; }
+  50% { border-radius: 55% 45% 55% 45% / 45% 55% 45% 55%; }
+}
+
+@keyframes blink {
+  0%, 96%, 98% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+
+@keyframes talk {
+  0% { height: 12px; }
+  100% { height: 24px; }
+}
+
+/* Sound Waves (Listening) */
+.sound-waves {
+  position: absolute; width: 300px; height: 300px;
+  border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.1);
+  animation: pulse-ring 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  opacity: 0;
+}
+.character-container.listening .sound-waves { opacity: 1; }
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.status-text {
+  font-size: 1.5rem; font-weight: 500; margin-bottom: 10px;
+  min-height: 36px;
+}
+.transcript {
+  font-size: 1.1rem; color: var(--text-secondary); max-width: 600px;
+  text-align: center; min-height: 24px; font-style: italic;
+}
