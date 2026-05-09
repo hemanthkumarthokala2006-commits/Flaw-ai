@@ -53,4 +53,5 @@ export const systemAPI = {
   openApp: (appName) => request("/system/open", { method: "POST", body: JSON.stringify({ app_name: appName }) }),
   playMedia: (appName) => request("/system/play", { method: "POST", body: JSON.stringify({ app_name: appName }) }),
   sendMessage: (person, message) => request("/system/message", { method: "POST", body: JSON.stringify({ person, message }) }),
+  askAgent: (query) => request("/system/ask", { method: "POST", body: JSON.stringify({ query }) }),
 };

@@ -132,25 +132,54 @@ export default function VoiceAssistant({ onClose }) {
     const lowerCmd = command.trim();
 
     // 4. SEND MESSAGE COMMAND
-    const msgMatch = lowerCmd.match(/\bsend\s+(?:a\s+)?(?:message|text|image|whatsapp|pic|picture)\s+to\s+(.+?)(?:\s+(?:saying|that|with|about)\s+(.+))?$/i);
-    if (msgMatch || lowerCmd.startsWith('message ')) {
-      let person = "";
-      let content = "Hello";
-      if (msgMatch) {
-        person = msgMatch[1].trim();
-        content = msgMatch[2] ? msgMatch[2].trim() : "Hello";
-      } else {
-        const msgParts = lowerCmd.match(/^message\s+(.+?)(?:\s+(?:saying|that)\s+(.+))?$/i);
-        person = msgParts?.[1]?.trim() || "";
-        content = msgParts?.[2]?.trim() || "Hello";
-      }
+    let isMessageCmd = false;
+    let person = "";
+    let content = "Hello";
 
+    if (lowerCmd.includes('send') && lowerCmd.includes('to')) {
+      isMessageCmd = true;
+      let parts = lowerCmd.split(' to ');
+      person = parts[1].trim();
+      
+      // Extract whatever was said before "to" as the message (e.g. "send hi message" -> "hi")
+      let beforeTo = parts[0].replace(/\b(?:send|a|message|text|whatsapp|telegram|discord)\b/ig, '').trim();
+      if (beforeTo) {
+        content = beforeTo;
+      }
+      
+      // If they explicitly used "saying", override the content
+      if (person.includes(' saying ')) {
+        let pParts = person.split(' saying ');
+        person = pParts[0].trim();
+        content = pParts[1].trim();
+      }
+    } else if (lowerCmd.startsWith('message ') || lowerCmd.startsWith('text ') || lowerCmd.startsWith('whatsapp ')) {
+      isMessageCmd = true;
+      let withoutPrefix = lowerCmd.replace(/^(?:message|text|whatsapp)\s+/i, '').trim();
+      
+      if (withoutPrefix.includes(' saying ')) {
+        let sp = withoutPrefix.split(' saying ');
+        person = sp[0].trim();
+        content = sp[1].trim();
+      } else {
+        let pParts = withoutPrefix.split(' ');
+        person = pParts[0]; 
+        content = pParts.slice(1).join(' ') || "Hello";
+      }
+    }
+
+    if (isMessageCmd) {
       if (person) {
-        speak(`Opening WhatsApp to send your message to ${person}.`, () => {
-          // api.whatsapp.com is 100% reliable and links directly to desktop or web app
-          const text = encodeURIComponent(`Hey ${person.charAt(0).toUpperCase() + person.slice(1)}, ${content}`);
-          window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
-        });
+        speak(`Sending your message.`);
+        try {
+          await systemAPI.sendMessage(person, content);
+        } catch (e) {
+          console.error("Local messaging failed", e);
+          speak(`I couldn't send the message locally, opening WhatsApp Web instead.`, () => {
+            const text = encodeURIComponent(`Hey ${person.charAt(0).toUpperCase() + person.slice(1)}, ${content}`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+          });
+        }
       } else {
         speak('Who would you like me to send a message to?');
       }
@@ -217,10 +246,20 @@ export default function VoiceAssistant({ onClose }) {
       return;
     }
 
-    // 6. DEFAULT FALLBACK
-    speak(`Let me search the web for ${command}`, () => {
-      window.open(`https://www.google.com/search?q=${encodeURIComponent(command)}`, '_blank');
-    });
+    // 6. DEFAULT FALLBACK - ASK AI (GEMINI + GOOGLE SEARCH)
+    try {
+      const response = await systemAPI.askAgent(command);
+      if (response && response.answer) {
+        speak(response.answer);
+      } else {
+        throw new Error("No answer");
+      }
+    } catch (e) {
+      console.log("AI answering failed, falling back to web search", e);
+      speak(`Let me search the web for ${command}`, () => {
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(command)}`, '_blank');
+      });
+    }
   };
 
   return (
