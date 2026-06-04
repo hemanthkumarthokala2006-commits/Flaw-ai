@@ -27,6 +27,8 @@ class Conversation(Base):
     )
     title = Column(String(200), default="New Chat")
     model_used = Column(String(50), default="gemini")
+    system_prompt = Column(Text, nullable=True)  # New field for custom system prompts
+    summary = Column(Text, nullable=True)  # New field for conversation summary
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -51,6 +53,7 @@ class Message(Base):
     content = Column(Text, nullable=False)
     message_type = Column(Enum(MessageType), default=MessageType.text)
     media_url = Column(String(500), nullable=True)
+    edited_at = Column(DateTime, nullable=True)  # New field for edit tracking
     created_at = Column(DateTime, server_default=func.now())
 
     # Relationships

@@ -5,7 +5,7 @@ try:
     tool = genai.protos.Tool(google_search=genai.protos.GoogleSearch())
     print("tool created")
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemma-4b-it",
         tools=[tool]
     )
     print("model created with tool")

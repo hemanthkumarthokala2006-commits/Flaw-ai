@@ -54,3 +54,8 @@ CREATE TABLE IF NOT EXISTS media (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_media_user_id (user_id)
 ) ENGINE=InnoDB;
+
+-- Add new columns for enhanced features
+ALTER TABLE conversations ADD COLUMN system_prompt TEXT;
+ALTER TABLE conversations ADD COLUMN summary TEXT;
+ALTER TABLE messages ADD COLUMN edited_at TIMESTAMP NULL;

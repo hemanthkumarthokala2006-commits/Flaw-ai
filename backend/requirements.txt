@@ -11,3 +11,6 @@ google-generativeai==0.8.3
 aiofiles==24.1.0
 bcrypt==4.2.0
 cryptography==43.0.1
+Pillow==10.4.0
+pyautogui==0.9.54
+mss==9.0.1

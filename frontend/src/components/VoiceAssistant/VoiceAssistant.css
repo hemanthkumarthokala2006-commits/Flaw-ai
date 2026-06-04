@@ -22,78 +22,102 @@
   margin-bottom: 40px;
 }
 
-/* Simple Anime-style Blob/Character */
+/* Premium Anime-style Character */
 .anime-character {
-  width: 180px; height: 180px; background: #fff;
+  width: 180px; height: 180px; background: #fff1e6; /* Skin tone */
   border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%;
-  position: relative; box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+  position: relative; box-shadow: 0 0 50px rgba(0, 212, 255, 0.3);
   animation: float 4s ease-in-out infinite, morph 8s ease-in-out infinite;
   display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 10px;
+  flex-direction: column; gap: 10px; overflow: hidden;
+  border: 4px solid #333;
+}
+
+.hair-front {
+  position: absolute; top: -10px; width: 120%; height: 60px;
+  background: #7c3aed; /* Purple hair */
+  border-radius: 50%; clip-path: polygon(0 0, 100% 0, 100% 100%, 80% 80%, 60% 100%, 40% 80%, 20% 100%, 0 80%);
+  z-index: 5;
 }
 
 .anime-character .eyes {
-  display: flex; gap: 40px;
+  display: flex; gap: 50px; z-index: 10; margin-top: 20px;
 }
 .anime-character .eye {
-  width: 16px; height: 24px; background: #000; border-radius: 50%;
-  animation: blink 4s infinite; position: relative;
+  width: 24px; height: 32px; background: #fff; border-radius: 50%;
+  border: 2px solid #333; position: relative;
+  animation: blink 5s infinite;
 }
-.anime-character .eye::after {
-  content: ''; position: absolute; top: 4px; right: 4px;
-  width: 6px; height: 6px; background: #fff; border-radius: 50%;
+.anime-character .pupil {
+  width: 12px; height: 16px; background: #7c3aed; border-radius: 50%;
+  position: absolute; bottom: 4px; left: 4px;
+}
+.anime-character .pupil::after {
+  content: ''; position: absolute; top: 2px; right: 2px;
+  width: 4px; height: 4px; background: #fff; border-radius: 50%;
+}
+
+.blush {
+  display: flex; gap: 100px; position: absolute; top: 100px; z-index: 5;
+}
+.blush-mark {
+  width: 20px; height: 10px; background: rgba(255, 153, 153, 0.5);
+  border-radius: 50%; filter: blur(2px);
 }
 
 .anime-character .mouth {
-  width: 24px; height: 12px; border-bottom: 4px solid #000;
-  border-radius: 0 0 20px 20px; transition: all 0.2s;
+  width: 20px; height: 10px; border-bottom: 3px solid #333;
+  border-radius: 0 0 20px 20px; transition: all 0.2s; z-index: 10;
 }
 
 .anime-character.speaking .mouth {
-  height: 24px; background: #ff9999; border: 4px solid #000; border-radius: 10px 10px 20px 20px;
-  animation: talk 0.3s infinite alternate;
+  height: 24px; width: 30px; background: #ff758c; border: 3px solid #333; 
+  border-radius: 10px 10px 30px 30px;
+  animation: talk 0.2s infinite alternate;
 }
 
 /* Animations */
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
+  50% { transform: translateY(-15px); }
 }
 
 @keyframes morph {
   0%, 100% { border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%; }
-  50% { border-radius: 55% 45% 55% 45% / 45% 55% 45% 55%; }
+  50% { border-radius: 52% 48% 52% 48% / 48% 52% 48% 52%; }
 }
 
 @keyframes blink {
-  0%, 96%, 98% { transform: scaleY(1); }
-  97% { transform: scaleY(0.1); }
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
 }
 
 @keyframes talk {
-  0% { height: 12px; }
-  100% { height: 24px; }
+  0% { transform: scaleY(0.8); }
+  100% { transform: scaleY(1.2); }
 }
 
 /* Sound Waves (Listening) */
 .sound-waves {
-  position: absolute; width: 300px; height: 300px;
-  border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.1);
-  animation: pulse-ring 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  position: absolute; width: 280px; height: 280px;
+  border-radius: 50%; border: 3px solid #00d4ff;
+  animation: pulse-ring 1.5s infinite;
   opacity: 0;
 }
 .character-container.listening .sound-waves { opacity: 1; }
 
 @keyframes pulse-ring {
-  0% { transform: scale(0.8); opacity: 0.5; }
-  100% { transform: scale(1.5); opacity: 0; }
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
 }
 
 .status-text {
-  font-size: 1.5rem; font-weight: 500; margin-bottom: 10px;
-  min-height: 36px;
+  font-size: 1.6rem; font-weight: 600; margin-bottom: 8px;
+  background: linear-gradient(90deg, #00d4ff, #7c3aed);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .transcript {
-  font-size: 1.1rem; color: var(--text-secondary); max-width: 600px;
+  font-size: 1.1rem; color: #aaa; max-width: 600px;
   text-align: center; min-height: 24px; font-style: italic;
+  padding: 0 20px;
 }

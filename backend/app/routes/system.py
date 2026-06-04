@@ -7,7 +7,51 @@ import urllib.parse
 import re
 import webbrowser
 
+from app.services.gemini import get_gemini_response, get_intent
+
 router = APIRouter(prefix="/api/system", tags=["System"])
+
+class ProcessRequest(BaseModel):
+    query: str
+
+@router.post("/process")
+async def process_command(request: ProcessRequest):
+    try:
+        result = await get_intent(request.query)
+        intent = result.get("intent")
+        params = result.get("params", {})
+        
+        return {
+            "status": "success",
+            "intent": intent,
+            "params": params
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/screenshot")
+async def take_screenshot():
+    try:
+        import mss
+        import os
+        import uuid
+        from app.config import settings
+        
+        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+        file_id = uuid.uuid4().hex
+        filename = f"screenshot_{file_id}.png"
+        file_path = os.path.join(settings.UPLOAD_DIR, filename)
+        
+        with mss.mss() as sct:
+            sct.shot(output=file_path)
+            
+        return {
+            "status": "success",
+            "media_url": f"{settings.BACKEND_URL}/uploads/{filename}",
+            "file_path": file_path
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 class OpenAppRequest(BaseModel):
     app_name: str
@@ -15,6 +59,7 @@ class OpenAppRequest(BaseModel):
 class SendMessageRequest(BaseModel):
     person: str
     message: str
+    is_image: bool = False
 
 @router.post("/open")
 async def open_app(request: OpenAppRequest):
@@ -146,20 +191,43 @@ async def send_message(request: SendMessageRequest):
                     return True
             return False
 
+        if request.is_image:
+            import tkinter as tk
+            from tkinter import filedialog
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+            file_path = filedialog.askopenfilename(
+                title="Select Image to Send",
+                filetypes=[("Image files", "*.jpg *.jpeg *.png *.gif *.bmp")]
+            )
+            root.destroy()
+            if file_path:
+                subprocess.run(f'powershell -command "Set-Clipboard -Path \'{file_path}\'"', shell=True)
+            else:
+                return {"status": "success", "message": "Image sending cancelled."}
+
+        use_web = False
+
         if app_name in ["telegram", "tg"]:
             subprocess.Popen("start telegram:", shell=True)
             if not wait_for_app_focus():
-                raise Exception("Telegram Desktop did not open. Is it installed?")
-            time.sleep(1)
-            pyautogui.hotkey('ctrl', 'f')
-            time.sleep(1)
-            pyautogui.write(person)
-            time.sleep(2)
-            pyautogui.press('enter')
-            time.sleep(1)
-            pyautogui.write(message)
-            time.sleep(0.5)
-            pyautogui.press('enter')
+                use_web = True
+            else:
+                time.sleep(1)
+                pyautogui.hotkey('ctrl', 'f')
+                time.sleep(1)
+                pyautogui.write(person)
+                time.sleep(2)
+                pyautogui.press('enter')
+                time.sleep(1)
+                if request.is_image:
+                    pyautogui.hotkey('ctrl', 'v')
+                    time.sleep(1)
+                else:
+                    pyautogui.write(message)
+                time.sleep(0.5)
+                pyautogui.press('enter')
             
         elif app_name in ["discord"]:
             ps_cmd = "powershell -Command \"Get-StartApps | Where-Object {$_.Name -match 'discord'} | Select-Object -First 1 -ExpandProperty AppID\""
@@ -170,44 +238,142 @@ async def send_message(request: SendMessageRequest):
                 subprocess.Popen("start discord:", shell=True)
                 
             if not wait_for_app_focus(15):
-                raise Exception("Discord did not open. Is it installed?")
-            time.sleep(1)
-            pyautogui.hotkey('ctrl', 'k')
-            time.sleep(1)
-            pyautogui.write(person)
-            time.sleep(2)
-            pyautogui.press('enter')
-            time.sleep(1)
-            pyautogui.write(message)
-            time.sleep(0.5)
-            pyautogui.press('enter')
-            
-        else:
-            # Default to WhatsApp
-            app_name = "whatsapp"
+                use_web = True
+            else:
+                time.sleep(1)
+                pyautogui.hotkey('ctrl', 'k')
+                time.sleep(1)
+                pyautogui.write(person)
+                time.sleep(2)
+                pyautogui.press('enter')
+                time.sleep(1)
+                if request.is_image:
+                    pyautogui.hotkey('ctrl', 'v')
+                    time.sleep(1)
+                else:
+                    pyautogui.write(message)
+                time.sleep(0.5)
+                pyautogui.press('enter')
+
+        elif app_name in ["instagram", "ig", "insta"]:
+            ps_cmd = "powershell -Command \"Get-StartApps | Where-Object {$_.Name -match 'instagram'} | Select-Object -First 1 -ExpandProperty AppID\""
+            res = subprocess.run(ps_cmd, shell=True, capture_output=True, text=True)
+            if res.stdout.strip():
+                subprocess.Popen(f"explorer shell:AppsFolder\\{res.stdout.strip()}", shell=True)
+                if not wait_for_app_focus(10):
+                    use_web = True
+                else:
+                    time.sleep(2)
+                    # No reliable shortcut for Instagram desktop search
+            else:
+                use_web = True
+                
+            if use_web:
+                import webbrowser
+                webbrowser.open("https://www.instagram.com/direct/new/")
+                time.sleep(6)
+                pyautogui.write(person)
+                time.sleep(3)
+                pyautogui.press('tab')
+                time.sleep(0.5)
+                pyautogui.press('space') # Check the user
+                time.sleep(0.5)
+                # It's hard to reliably hit "Chat" button via tabs.
+                # So we just leave it here for user.
+                use_web = False # Handled
+
+        elif app_name in ["snapchat", "snap"]:
+            ps_cmd = "powershell -Command \"Get-StartApps | Where-Object {$_.Name -match 'snapchat'} | Select-Object -First 1 -ExpandProperty AppID\""
+            res = subprocess.run(ps_cmd, shell=True, capture_output=True, text=True)
+            if res.stdout.strip():
+                subprocess.Popen(f"explorer shell:AppsFolder\\{res.stdout.strip()}", shell=True)
+                if not wait_for_app_focus(10):
+                    use_web = True
+                else:
+                    time.sleep(2)
+            else:
+                use_web = True
+                
+            if use_web:
+                import webbrowser
+                webbrowser.open("https://web.snapchat.com/")
+                time.sleep(6)
+                use_web = False # Handled
+
+        elif app_name == "whatsapp":
             subprocess.Popen("start whatsapp:", shell=True)
             if not wait_for_app_focus():
-                raise Exception("WhatsApp Desktop did not open. Is it installed?")
-            time.sleep(1) 
-            pyautogui.hotkey('ctrl', 'f')
-            time.sleep(1)
-            pyautogui.write(person)
-            time.sleep(2) 
-            pyautogui.press('enter')
-            time.sleep(1)
-            if message == "Hello":
-                pyautogui.write(f"Hey {person.title()}, hi")
+                use_web = True
             else:
-                pyautogui.write(message.capitalize())
-            time.sleep(0.5)
-            pyautogui.press('enter')
-        
-        return {"status": "success", "message": f"Successfully sent message to {person} on {app_name.title()}"}
+                time.sleep(1) 
+                pyautogui.hotkey('ctrl', 'f')
+                time.sleep(1)
+                pyautogui.write(person)
+                time.sleep(2) 
+                pyautogui.press('enter')
+                time.sleep(1)
+                if request.is_image:
+                    pyautogui.hotkey('ctrl', 'v')
+                    time.sleep(1)
+                else:
+                    if message == "Hello":
+                        pyautogui.write(f"Hey {person.title()}, hi")
+                    else:
+                        pyautogui.write(message.capitalize())
+                time.sleep(0.5)
+                pyautogui.press('enter')
+
+        else:
+            # Dynamically search for ANY other specified chatting application
+            ps_cmd = f"powershell -Command \"Get-StartApps | Where-Object {{$_.Name -match '{app_name}'}} | Select-Object -First 1 -ExpandProperty AppID\""
+            res = subprocess.run(ps_cmd, shell=True, capture_output=True, text=True)
+            if res.stdout.strip():
+                subprocess.Popen(f"explorer shell:AppsFolder\\{res.stdout.strip()}", shell=True)
+                if not wait_for_app_focus(15):
+                    use_web = True
+                else:
+                    time.sleep(2)
+                    # Try common shortcut: Ctrl+F for search
+                    pyautogui.hotkey('ctrl', 'f')
+                    time.sleep(1)
+                    pyautogui.write(person)
+                    time.sleep(2)
+                    pyautogui.press('enter')
+                    time.sleep(1)
+                    if request.is_image:
+                        pyautogui.hotkey('ctrl', 'v')
+                        time.sleep(1)
+                    else:
+                        if message == "Hello":
+                            pyautogui.write(f"Hey {person.title()}, hi")
+                        else:
+                            pyautogui.write(message.capitalize())
+                    time.sleep(0.5)
+                    pyautogui.press('enter')
+            else:
+                use_web = True
+
+        if use_web and app_name not in ["instagram", "ig", "insta", "snapchat", "snap"]:
+            import webbrowser
+            import urllib.parse
+            if app_name == "whatsapp":
+                text = urllib.parse.quote(f"Hey {person.title()}, {message}" if not request.is_image else "")
+                webbrowser.open(f"https://api.whatsapp.com/send?text={text}")
+            elif app_name in ["telegram", "tg"]:
+                webbrowser.open("https://web.telegram.org/")
+            elif app_name == "discord":
+                webbrowser.open("https://discord.com/app")
+            else:
+                # Open google search for the requested chatting app
+                webbrowser.open(f"https://www.google.com/search?q={urllib.parse.quote(app_name)}+web")
+
+        return {"status": "success", "message": f"Successfully processed message to {person} on {app_name.title()}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 class AskRequest(BaseModel):
     query: str
+    media_url: str | None = None
 
 @router.post("/ask")
 async def ask_agent(request: AskRequest):
@@ -218,12 +384,15 @@ async def ask_agent(request: AskRequest):
                 self.role = role
                 self.content = content
         
-        # Create a tiny prompt context asking for concise voice answers
-        system_msg = DummyMsg("user", "Please provide a very short, concise, conversational answer suitable for a voice assistant. No markdown or formatting.")
+        system_msg = DummyMsg("user", "You are Flaw, an AI assistant created by Hemanth kumar. Please provide a short, conversational voice answer. No markdown.")
         user_msg = DummyMsg("user", request.query)
         
-        response = await get_gemini_response([system_msg, user_msg])
-        # Clean up any asterisks or markdown that might sound weird in text-to-speech
+        image_path = None
+        if request.media_url:
+            filename = request.media_url.split("/")[-1]
+            image_path = os.path.join(settings.UPLOAD_DIR, filename)
+            
+        response = await get_gemini_response([system_msg, user_msg], image_path=image_path)
         response = response.replace("*", "").replace("#", "")
         return {"status": "success", "answer": response}
     except Exception as e:

@@ -55,7 +55,9 @@
 .sidebar-chat-item:hover { background: var(--bg-hover); color: var(--text-primary); }
 .sidebar-chat-item.active { background: rgba(0,212,255,0.08); color: var(--accent-blue); }
 
-.chat-title { flex: 1; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.chat-title { font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-summary { font-size: 0.7rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .chat-delete {
   opacity: 0; background: none; border: none; color: var(--text-muted);
@@ -81,3 +83,10 @@
   font-weight: 700; font-size: 0.85rem; color: #fff;
 }
 .sidebar-username { font-size: 0.85rem; font-weight: 500; color: var(--text-primary); }
+
+.sidebar-model-info {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  padding-right: 12px; border-right: 1px solid var(--glass-border); margin-right: 12px;
+}
+.model-name { font-size: 0.7rem; font-weight: 700; color: var(--accent-blue); letter-spacing: 0.5px; }
+.model-type { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }

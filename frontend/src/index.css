@@ -103,7 +103,16 @@ a { color: var(--accent-blue); text-decoration: none; }
 }
 
 /* ─── Layout ─── */
-.app-layout { display: flex; height: 100vh; overflow: hidden; }
+.app-layout { 
+  display: flex; 
+  height: 100vh; 
+  min-height: 100vh;
+  width: 100vw;
+  overflow: hidden; 
+  background: var(--bg-primary);
+  visibility: visible !important;
+  opacity: 1 !important;
+}
 
 /* ─── Animations ─── */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

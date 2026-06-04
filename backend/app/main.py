@@ -3,6 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
+import asyncio
+import platform
+
+# Fix for Windows "Event loop is closed" error
+if platform.system() == 'Windows':
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 from app.utils.database import init_db
 from app.models import *  # noqa: F401, F403 — ensures all models are registered

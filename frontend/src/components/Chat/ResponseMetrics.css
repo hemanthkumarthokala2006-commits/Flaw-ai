@@ -1,0 +1,15 @@
+.response-metrics {
+  display: flex;
+  gap: 12px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Plus, MessageSquare, Trash2, LogOut, Settings, Search, Edit } from "lucide-react";
 import { chatAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+import SystemPromptModal from "./SystemPromptModal";
 import "./Sidebar.css";
 
 export default function Sidebar({ activeChat, onSelectChat, onNewChat }) {
   const [chats, setChats] = useState([]);
+  const [showPromptModal, setShowPromptModal] = useState(false);
   const { user, logout } = useAuth();
 
   useEffect(() => { loadChats(); }, []);
@@ -17,12 +19,16 @@ export default function Sidebar({ activeChat, onSelectChat, onNewChat }) {
     } catch (e) { console.error("Failed to load chats", e); }
   };
 
-  const handleNewChat = async () => {
+  const handleNewChat = async (systemPrompt = null) => {
     try {
-      const chat = await chatAPI.create();
+      const chat = await chatAPI.create("New Chat", systemPrompt);
       setChats((prev) => [chat, ...prev]);
       onNewChat(chat);
     } catch (e) { console.error(e); }
+  };
+
+  const handleNewChatClick = () => {
+    setShowPromptModal(true);
   };
 
   const handleDelete = async (e, id) => {
@@ -37,7 +43,7 @@ export default function Sidebar({ activeChat, onSelectChat, onNewChat }) {
   return (
     <aside className="sidebar glass-card">
       <div className="sidebar-header">
-        <button className="new-chat-btn" onClick={handleNewChat}>
+        <button className="new-chat-btn" onClick={handleNewChatClick}>
           <div className="sidebar-brand">
             <div className="gpt-logo">
               <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
@@ -75,7 +81,10 @@ export default function Sidebar({ activeChat, onSelectChat, onNewChat }) {
             className={`sidebar-chat-item ${activeChat === chat.id ? "active" : ""}`}
             onClick={() => onSelectChat(chat)}
           >
-            <span className="chat-title">{chat.title}</span>
+            <div className="chat-info">
+              <span className="chat-title">{chat.title}</span>
+              {chat.summary && <span className="chat-summary">{chat.summary}</span>}
+            </div>
             <button className="chat-delete" onClick={(e) => handleDelete(e, chat.id)} title="Delete">
               <Trash2 size={14} />
             </button>
@@ -90,10 +99,18 @@ export default function Sidebar({ activeChat, onSelectChat, onNewChat }) {
           </div>
           <span className="sidebar-username">{user?.username || "User"}</span>
         </div>
+        <div className="sidebar-model-info">
+          <span className="model-name">Gemini 2.5 Flash</span>
+          <span className="model-type">Multimodal</span>
+        </div>
         <button className="btn-icon" onClick={logout} title="Logout">
           <LogOut size={16} />
         </button>
       </div>
-    </aside>
+      <SystemPromptModal
+        isOpen={showPromptModal}
+        onClose={() => setShowPromptModal(false)}
+        onSave={handleNewChat}
+      />    </aside>
   );
 }

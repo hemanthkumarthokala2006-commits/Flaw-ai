@@ -15,6 +15,7 @@
   z-index: 10;
 }
 .chat-header-info h2 { font-size: 1rem; font-weight: 600; cursor: pointer; }
+.chat-header-actions { display: flex; align-items: center; gap: 12px; }
 .chat-model {
   font-size: 0.75rem; color: var(--accent-blue); background: rgba(0,212,255,0.08);
   padding: 2px 8px; border-radius: 20px; margin-top: 2px; display: inline-block;
@@ -23,6 +24,28 @@
 /* Messages Area */
 .chat-messages {
   flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;
+}
+
+.load-more-btn {
+  align-self: center;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all var(--transition);
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--accent-blue);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Welcome Screen */
@@ -95,6 +118,53 @@
 .message-content li { margin-bottom: 4px; }
 .message-content strong { color: var(--accent-blue); font-weight: 700; }
 
+.edit-btn {
+  position: absolute; top: 8px; right: 8px; opacity: 0; background: none; border: none;
+  color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px;
+  transition: all var(--transition);
+}
+.message:hover .edit-btn { opacity: 1; }
+.edit-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.edited-label {
+  font-size: 0.7rem; color: var(--text-muted); align-self: flex-end; margin-top: -4px;
+}
+
+.message-edit {
+  max-width: 80%; display: flex; flex-direction: column; gap: 8px;
+}
+
+.message-edit textarea {
+  padding: 12px; border: 1px solid var(--accent-blue); border-radius: var(--radius-sm);
+  background: var(--bg-secondary); color: var(--text-primary); resize: vertical;
+  font-family: inherit; outline: none;
+}
+
+.edit-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+
+.edit-actions button {
+  padding: 6px 12px; border: none; border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 0.8rem; transition: all var(--transition);
+}
+
+.edit-actions button:first-child {
+  background: transparent; color: var(--text-muted); border: 1px solid var(--glass-border);
+}
+
+.edit-actions button:first-child:hover {
+  background: var(--bg-hover);
+}
+
+.edit-actions button:last-child {
+  background: var(--accent-gradient); color: white;
+}
+
+.edit-actions button:last-child:hover {
+  opacity: 0.9;
+}
+
 /* Typing indicator */
 .typing-indicator {
   display: flex; gap: 5px; padding: 14px 18px !important; align-items: center;
@@ -135,13 +205,104 @@
 .send-btn:not(:disabled) { color: var(--accent-blue) !important; background: rgba(0,212,255,0.1) !important; border: 1px solid rgba(0,212,255,0.3); }
 .send-btn:disabled { opacity: 0.3; cursor: not-allowed; background: transparent; color: var(--text-muted) !important; border: none; }
 
-.chat-disclaimer {
-  text-align: center; font-size: 0.75rem; color: var(--text-muted);
-  margin-top: 8px; max-width: 800px; margin-left: auto; margin-right: auto;
+.chat-header-actions { display: flex; align-items: center; gap: 16px; }
+.pro-badge {
+  background: var(--accent-gradient); color: #fff; font-size: 0.65rem;
+  padding: 1px 6px; border-radius: 4px; font-weight: 800; margin-left: 4px;
+  vertical-align: middle; letter-spacing: 0.5px;
+}
+.system-status {
+  display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-muted);
+}
+.status-dot {
+  width: 8px; height: 8px; background: #10b981; border-radius: 50%;
+  box-shadow: 0 0 8px #10b981; animation: pulse 2s infinite;
 }
 
-.message-image { max-width: 320px; width: 100%; border-radius: var(--radius-lg); margin-top: 8px; }
-.message-audio { width: 100%; margin-top: 8px; }
-.message-file-link { color: var(--accent-blue); text-decoration: underline; }
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
 
-.btn-icon.recording { background: rgba(255, 80, 80, 0.2); color: #ff6b6b; }
+/* Quick Actions Bar */
+.quick-actions-bar {
+  display: flex; gap: 8px; margin-bottom: 12px; max-width: 800px; margin-left: auto; margin-right: auto;
+  overflow-x: auto; padding-bottom: 4px;
+}
+.quick-actions-bar::-webkit-scrollbar { display: none; }
+
+.quick-actions-bar button {
+  display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+  border-radius: 20px; color: var(--text-secondary); font-size: 0.75rem;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.quick-actions-bar button:hover {
+  background: rgba(0,212,255,0.08); border-color: rgba(0,212,255,0.3);
+  color: var(--accent-blue); transform: translateY(-1px);
+}
+
+.mermaid {
+  background: white; border-radius: 8px; padding: 16px; margin: 12px 0;
+  display: flex; justify-content: center;
+}
+
+/* Code Block Enhancements */
+.code-block-container {
+  margin: 16px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background: #1e1e1e;
+}
+
+.code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #2d2d2d;
+  color: #d1d1d1;
+  font-size: 0.75rem;
+  font-family: 'Inter', sans-serif;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.copy-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #d1d1d1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.copy-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.message.assistant .message-content pre {
+  margin: 0;
+  border: none;
+  background: transparent;
+}
+
+.streaming-cursor::after {
+  content: "▊";
+  margin-left: 2px;
+  color: var(--accent-blue);
+  animation: blink 1s step-end infinite;
+  font-size: 1rem;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
